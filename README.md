@@ -1,4 +1,4 @@
-# ccc - Claude Config Switcher
+# ccc - Claude Config Changer
 
 > 给 AI 用的配置变更工具 · Config changer for AI agents
 
@@ -26,7 +26,7 @@ AI: ccc apply deepseek → 自动切换 → 开始执行
 
 ### What is this?
 
-`ccc` (Claude Config Changer) is a CLI tool designed for **AI agents** to change their own Claude Code configuration at runtime. Unlike GUI-based config switchers meant for humans, `ccc` is designed to be called programmatically — by another AI, a script, or any automation system.
+`ccc` (Claude Config Changer) is a CLI tool designed for **AI agents** to change their own Claude Code configuration at runtime. Unlike GUI-based config changers meant for humans, `ccc` is designed to be called programmatically — by another AI, a script, or any automation system.
 
 When an AI agent needs to change its model, API endpoint, or credentials mid-session, it simply runs `ccc apply <profile>` and the change happens automatically with a backup.
 
@@ -48,7 +48,7 @@ npm install -g @weibaohui/ccc
 |---|---|
 | `ccc list` | List all available profiles |
 | `ccc view [suffix]` | View profile details (default: current config) |
-| `ccc apply <suffix>` | Switch to the specified profile (auto-backup) |
+| `ccc apply <suffix>` | Change to the specified profile (auto-backup) |
 | `ccc run <suffix> <cmd...>` | Run a command with a profile (does not modify global settings) |
 | `ccc verify <suffix>` | Verify a profile (JSON parse → required fields → real API call) |
 | `ccc batch [suffix...]` | Batch verify all profiles with real-time progress |

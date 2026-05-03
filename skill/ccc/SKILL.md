@@ -10,7 +10,7 @@ metadata:
     related_skills: [claude-code, atomcode, kimi-cli]
 ---
 
-# CCC — Claude Settings Switcher
+# CCC — Claude Settings Changer
 
 `ccc` is a CLI tool for managing multiple Claude `settings.json` profiles. AI agents use it to verify and change between different LLM provider configurations without modifying the global `~/.claude/settings.json`.
 

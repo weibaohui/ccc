@@ -23,7 +23,7 @@ static RESULTS: Lazy<Arc<Mutex<Vec<VerifyResult>>>> = Lazy::new(|| Arc::new(Mute
 
 #[derive(Parser, Debug)]
 #[command(name = "ccc")]
-#[command(about = "Claude settings switcher for AI agents", long_about = None)]
+#[command(about = "Claude settings changer for AI agents", long_about = None)]
 enum Cli {
     /// List all available settings profiles
     List,
