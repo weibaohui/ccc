@@ -3,13 +3,14 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 
 const CLAUDE_DIR: &str = ".claude";
 const SETTINGS_BASE: &str = "settings.json";
 
 #[derive(Parser, Debug)]
 #[command(name = "ccc")]
-#[command(about = "Claude settings switcher", long_about = None)]
+#[command(about = "Claude settings switcher for AI agents", long_about = None)]
 enum Cli {
     /// List all available settings profiles
     List,
@@ -21,6 +22,19 @@ enum Cli {
     /// Apply a settings profile (backup current + replace)
     Apply {
         /// Profile suffix to apply (e.g., "zai", "minimax")
+        suffix: String,
+    },
+    /// Run a command with a specific settings profile (does not modify global settings.json)
+    Run {
+        /// Profile suffix to use (e.g., "zai", "minimax")
+        suffix: String,
+        /// Command to execute (pass through to claude)
+        #[clap(trailing_var_arg = true)]
+        command: Vec<String>,
+    },
+    /// Verify if a settings profile is valid by making a real API call
+    Verify {
+        /// Profile suffix to verify (e.g., "zai", "minimax")
         suffix: String,
     },
 }
@@ -219,6 +233,138 @@ fn main() {
                 "Done! Backup: {}, Applied: settings.json.{}",
                 bak_name, suffix
             );
+        }
+        Cli::Run { suffix, command } => {
+            let dir = claude_dir();
+            let profile_path = dir.join(format!("{}.{}", SETTINGS_BASE, suffix));
+
+            if !profile_path.exists() {
+                eprintln!("ERROR: {} does not exist", profile_path.display());
+                std::process::exit(1);
+            }
+
+            // Build claude command: claude --settings <path> [command...]
+            let mut cmd = Command::new("claude");
+            cmd.arg("--settings").arg(&profile_path);
+
+            if command.is_empty() {
+                // Interactive mode if no command given
+            } else {
+                // Join all args as a single prompt string for -p mode
+                // If first arg is -p or --print, pass through as-is
+                if command[0] == "-p" || command[0] == "--print" || command[0] == "-c" || command[0] == "--continue" {
+                    for arg in &command {
+                        cmd.arg(arg);
+                    }
+                } else {
+                    // Wrap as a prompt
+                    cmd.arg("-p");
+                    cmd.arg(command.join(" "));
+                }
+            }
+
+            // Inherit stdin/stdout/stderr for interactive use
+            let status = cmd.status();
+
+            match status {
+                Ok(exit_status) => {
+                    std::process::exit(exit_status.code().unwrap_or(1));
+                }
+                Err(e) => {
+                    eprintln!("ERROR: Failed to execute claude: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        }
+        Cli::Verify { suffix } => {
+            let dir = claude_dir();
+            let profile_path = dir.join(format!("{}.{}", SETTINGS_BASE, suffix));
+
+            if !profile_path.exists() {
+                eprintln!("ERROR: {} does not exist", profile_path.display());
+                std::process::exit(1);
+            }
+
+            // Try to parse the JSON first
+            match Settings::from_file(&profile_path) {
+                Ok(_settings) => {
+                    println!("[1/2] JSON parsing: OK");
+                }
+                Err(e) => {
+                    eprintln!("[1/2] JSON parsing: FAILED - {}", e);
+                    std::process::exit(1);
+                }
+            }
+
+            // Check required env fields
+            let content = fs::read_to_string(&profile_path).unwrap();
+            match serde_json::from_str::<serde_json::Value>(&content) {
+                Ok(json) => {
+                    let env = json.get("env").and_then(|v| v.as_object());
+                    let has_token = env
+                        .and_then(|m| m.get("ANTHROPIC_AUTH_TOKEN"))
+                        .map(|v| v.is_string())
+                        .unwrap_or(false);
+                    let has_url = env
+                        .and_then(|m| m.get("ANTHROPIC_BASE_URL"))
+                        .map(|v| v.is_string())
+                        .unwrap_or(false);
+                    let model = env
+                        .and_then(|m| m.get("ANTHROPIC_MODEL"))
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("N/A");
+
+                    if !has_token {
+                        eprintln!("[2/2] Required field ANTHROPIC_AUTH_TOKEN: MISSING");
+                        std::process::exit(1);
+                    }
+                    if !has_url {
+                        eprintln!("[2/2] Required field ANTHROPIC_BASE_URL: MISSING");
+                        std::process::exit(1);
+                    }
+                    println!("[2/2] Required fields: OK (model={})", model);
+                }
+                Err(e) => {
+                    eprintln!("[2/2] JSON structure: FAILED - {}", e);
+                    std::process::exit(1);
+                }
+            }
+
+            // Make a real API call to verify credentials
+            println!("[3/3] Making API call to verify credentials...");
+            let output = Command::new("claude")
+                .arg("--settings")
+                .arg(&profile_path)
+                .arg("-p")
+                .arg("Reply with exactly one word: OK")
+                .output();
+
+            match output {
+                Ok(out) => {
+                    let stdout = String::from_utf8_lossy(&out.stdout);
+                    let stderr = String::from_utf8_lossy(&out.stderr);
+
+                    if out.status.success() && stdout.trim().contains("OK") {
+                        println!("[3/3] API call: OK");
+                        println!("");
+                        println!("Verification PASSED ✅");
+                        println!("Profile 'settings.json.{}' is valid and usable.", suffix);
+                    } else {
+                        eprintln!("[3/3] API call: FAILED");
+                        if !stdout.is_empty() {
+                            eprintln!("stdout: {}", stdout.trim());
+                        }
+                        if !stderr.is_empty() {
+                            eprintln!("stderr: {}", stderr.trim());
+                        }
+                        std::process::exit(1);
+                    }
+                }
+                Err(e) => {
+                    eprintln!("[3/3] API call: FAILED - {}", e);
+                    std::process::exit(1);
+                }
+            }
         }
     }
 }
