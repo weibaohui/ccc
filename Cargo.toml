@@ -1,6 +1,6 @@
 [package]
 name = "ccc"
-version = "0.3.0"
+version = "0.3.2"
 edition = "2021"
 description = "Claude settings changer for AI agents"
 license = "MIT"
