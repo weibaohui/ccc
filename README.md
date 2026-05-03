@@ -52,6 +52,7 @@ npm install -g @weibaohui/ccc
 | `ccc run <suffix> <cmd...>` | Run a command with a profile (does not modify global settings) |
 | `ccc verify <suffix>` | Verify a profile (JSON parse → required fields → real API call) |
 | `ccc batch [suffix...]` | Batch verify all profiles with real-time progress |
+| `ccc skill install` | Install the embedded CCC skill to `~/.claude/skills/` |
 
 ### Example workflow
 
@@ -144,6 +145,7 @@ npm install -g @weibaohui/ccc
 | `ccc run <suffix> <cmd...>` | 使用指定配置运行命令（不修改全局配置） |
 | `ccc verify <suffix>` | 验证配置可用性（JSON解析 → 必填字段 → 真实API调用） |
 | `ccc batch [suffix...]` | 批量验证所有配置（实时进度显示） |
+| `ccc skill install` | 将内置 CCC skill 安装到 `~/.claude/skills/` |
 
 ### 典型工作流
 

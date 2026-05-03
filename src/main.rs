@@ -3,14 +3,20 @@ use once_cell::sync::Lazy;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
+use std::io::{Read, Write as IoWrite};
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
+use zip::ZipArchive;
 
 const CLAUDE_DIR: &str = ".claude";
 const SETTINGS_BASE: &str = "settings.json";
+const SKILL_NAME: &str = "ccc";
+
+// Embedded skill zip (generated at compile time by build.rs)
+static SKILL_ZIP: &[u8] = include_bytes!("ccc_skill.bin");
 
 // Global result store shared across threads
 static RESULTS: Lazy<Arc<Mutex<Vec<VerifyResult>>>> = Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
@@ -50,6 +56,18 @@ enum Cli {
         #[clap(trailing_var_arg = true)]
         profiles: Vec<String>,
     },
+    /// Manage the embedded CCC skill (install to ~/.claude/skills/)
+    Skill {
+        /// Skill action: install
+        #[clap(subcommand)]
+        action: SkillAction,
+    },
+}
+
+#[derive(Parser, Debug)]
+enum SkillAction {
+    /// Install the embedded CCC skill to ~/.claude/skills/ccc/
+    Install,
 }
 
 fn claude_dir() -> PathBuf {
@@ -646,5 +664,48 @@ fn main() {
                 std::process::exit(1);
             }
         }
+        Cli::Skill { action } => match action {
+            SkillAction::Install => {
+                if let Err(e) = skill_install() {
+                    eprintln!("Skill install failed: {}", e);
+                    std::process::exit(1);
+                }
+            }
+        },
     }
+}
+
+fn skill_install() -> Result<(), String> {
+    let skill_bytes = SKILL_ZIP;
+    if skill_bytes.is_empty() {
+        return Err("No embedded skill found. The skill was not compiled into the binary.".to_string());
+    }
+
+    let cursor = std::io::Cursor::new(skill_bytes);
+    let mut archive = ZipArchive::new(cursor).map_err(|e| format!("Failed to read skill zip: {}", e))?;
+
+    // Target directory: ~/.claude/skills/ccc/
+    let skill_dir = claude_dir().join("skills").join(SKILL_NAME);
+    fs::create_dir_all(&skill_dir).map_err(|e| format!("Failed to create skill directory: {}", e))?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i).map_err(|e| format!("Failed to read zip entry: {}", e))?;
+        let outpath = skill_dir.join(file.name());
+
+        if file.name().ends_with('/') {
+            fs::create_dir_all(&outpath).map_err(|e| format!("Failed to create dir: {}", e))?;
+        } else {
+            if let Some(parent) = outpath.parent() {
+                fs::create_dir_all(parent).map_err(|e| format!("Failed to create parent dir: {}", e))?;
+            }
+            let mut outfile = fs::File::create(&outpath)
+                .map_err(|e| format!("Failed to create file {:?}: {}", outpath, e))?;
+            std::io::copy(&mut file, &mut outfile)
+                .map_err(|e| format!("Failed to write file {:?}: {}", outpath, e))?;
+        }
+    }
+
+    println!("✅ Skill '{}' installed to:", SKILL_NAME);
+    println!("   {}", skill_dir.display());
+    Ok(())
 }
