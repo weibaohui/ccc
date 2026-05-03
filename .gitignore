@@ -1,0 +1,19 @@
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+*.log
+
+# Backup files (keep settings.json.bak-*)
+*.bak-*
+
+# Claude specific (not needed for this tool repo)
+.history
