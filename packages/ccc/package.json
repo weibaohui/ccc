@@ -18,9 +18,7 @@
   },
   "optionalDependencies": {
     "@weibaohui/ccc-linux-x64": "*",
-    "@weibaohui/ccc-linux-arm64": "*",
     "@weibaohui/ccc-darwin-arm64": "*",
-    "@weibaohui/ccc-darwin-x64": "*",
-    "@weibaohui/ccc-windows-x64": "*"
+    "@weibaohui/ccc-darwin-x64": "*"
   }
 }
