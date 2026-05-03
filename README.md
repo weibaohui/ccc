@@ -49,6 +49,9 @@ npm install -g @weibaohui/ccc
 | `ccc list` | List all available profiles |
 | `ccc view [suffix]` | View profile details (default: current config) |
 | `ccc apply <suffix>` | Switch to the specified profile (auto-backup) |
+| `ccc run <suffix> <cmd...>` | Run a command with a profile (does not modify global settings) |
+| `ccc verify <suffix>` | Verify a profile (JSON parse → required fields → real API call) |
+| `ccc batch [suffix...]` | Batch verify all profiles with real-time progress |
 
 ### Example workflow
 
@@ -60,6 +63,38 @@ Applying profile 'deepseek'...
 Done! Backup: settings.json.bak-20260502180851, Applied: settings.json.deepseek
 
 # AI now runs with the new config automatically
+```
+
+### AI Workflow (recommended for agents)
+
+```bash
+# Agent reads config first
+$ ccc view minimax
+
+# Agent verifies before use (3-step: JSON → fields → API call)
+$ ccc verify minimax
+[1/2] JSON parsing: OK
+[2/2] Required fields: OK (model=MiniMax-M2.7-highspeed)
+[3/3] Making API call to verify credentials...
+[3/3] API call: OK
+Verification PASSED ✅
+
+# Agent runs with that profile (no global modification)
+$ ccc run minimax -p "fix the login bug"
+# Claude uses minimax profile for this command only
+
+# Batch verify all profiles at once
+$ ccc batch
+Batch verify: 8 profile(s)
+────────────────────────────────────────
+  [8s] Progress: 8/8 | ✅ 5 | ❌ 3 | ⏳ 0
+════════════════════════════════════════════════════════════
+  BATCH VERIFY RESULTS  (8 profiles)
+────────────────────────────────────────────────────────────
+  minimax              ✅ PASS          model=MiniMax-M2.7-highspeed
+  zai                  ✅ PASS          model=GLM-5.1
+  kimi                 ❌ FAIL          API error: Failed to authenticate.
+════════════════════════════════════════════════════════════
 ```
 
 ### How it works
@@ -106,6 +141,9 @@ npm install -g @weibaohui/ccc
 | `ccc list` | 列出所有可用配置 |
 | `ccc view [suffix]` | 查看配置详情（默认查看当前配置） |
 | `ccc apply <suffix>` | 切换到指定配置（自动备份） |
+| `ccc run <suffix> <cmd...>` | 使用指定配置运行命令（不修改全局配置） |
+| `ccc verify <suffix>` | 验证配置可用性（JSON解析 → 必填字段 → 真实API调用） |
+| `ccc batch [suffix...]` | 批量验证所有配置（实时进度显示） |
 
 ### 典型工作流
 
