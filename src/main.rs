@@ -86,7 +86,7 @@ impl Settings {
 
     fn print_summary(&self, label: &str) {
         println!("{}", label);
-        println!("{}", "─".repeat(50));
+        println!("{}", "=".repeat(50));
 
         if let Some(env) = &self.env {
             println!("  env:");

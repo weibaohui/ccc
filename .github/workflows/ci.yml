@@ -18,20 +18,26 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        target:
-          - x86_64-unknown-linux-gnu
-          - aarch64-apple-darwin
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             use-cross: false
+            artifact-name: ccc-linux-x64
+
           - os: ubuntu-latest
             target: aarch64-apple-darwin
             use-cross: true
+            artifact-name: ccc-darwin-arm64
+
           - os: macos-latest
             target: aarch64-apple-darwin
             use-cross: false
+            artifact-name: ccc-darwin-arm64
+
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            use-cross: false
+            artifact-name: ccc-darwin-x64
 
     runs-on: ${{ matrix.os }}
 
@@ -48,17 +54,12 @@ jobs:
         run: cargo install cross --locked
 
       - name: Build
-        if: matrix.use-cross == false
         run: cargo build --release --target ${{ matrix.target }}
-
-      - name: Build (cross)
-        if: matrix.use-cross == true
-        run: cross build --release --target ${{ matrix.target }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ccc-${{ matrix.os }}-${{ matrix.target }}
+          name: ${{ matrix.artifact-name }}
           path: target/${{ matrix.target }}/release/ccc
 
   release:
@@ -74,7 +75,55 @@ jobs:
           path: artifacts/
 
       - name: List artifacts
-        run: find artifacts/ -type f -name 'ccc' | sort
+        run: find artifacts/ -type f | sort
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Prepare packages
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "Publishing version: $VERSION"
+
+          # Copy binaries to package bin/ directories
+          mkdir -p packages/ccc-linux-x64/bin
+          mkdir -p packages/ccc-darwin-arm64/bin
+          mkdir -p packages/ccc-darwin-x64/bin
+
+          cp artifacts/ccc-linux-x64/ccc packages/ccc-linux-x64/bin/ccc
+          cp artifacts/ccc-darwin-arm64/ccc packages/ccc-darwin-arm64/bin/ccc
+          cp artifacts/ccc-darwin-x64/ccc packages/ccc-darwin-x64/bin/ccc
+
+          chmod +x packages/ccc-linux-x64/bin/ccc
+          chmod +x packages/ccc-darwin-arm64/bin/ccc
+          chmod +x packages/ccc-darwin-x64/bin/ccc
+
+          # Update version in all package.json files
+          for pkg in ccc-linux-x64 ccc-darwin-arm64 ccc-darwin-x64 ccc; do
+            node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('packages/$pkg/package.json','utf8')); p.version='$VERSION'; fs.writeFileSync('packages/$pkg/package.json', JSON.stringify(p, null, 2)+'\n');"
+            echo "Updated $pkg to $VERSION"
+          done
+
+      - name: Publish platform packages to npm
+        run: |
+          for pkg in ccc-linux-x64 ccc-darwin-arm64 ccc-darwin-x64; do
+            echo "Publishing @weibaohui/$pkg..."
+            cd packages/$pkg
+            npm publish --access public
+            cd ../..
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish wrapper package to npm
+        run: |
+          cd packages/ccc
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

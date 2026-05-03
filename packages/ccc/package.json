@@ -1,0 +1,19 @@
+{
+  "name": "@weibaohui/ccc",
+  "version": "0.1.0",
+  "description": "ccc - Claude settings switcher",
+  "keywords": ["ccc", "claude", "settings", "cli"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weibaohui/ccc"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "optionalDependencies": {
+    "@weibaohui/ccc-linux-x64": "*",
+    "@weibaohui/ccc-darwin-arm64": "*",
+    "@weibaohui/ccc-darwin-x64": "*"
+  }
+}

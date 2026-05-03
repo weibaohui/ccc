@@ -1,0 +1,17 @@
+{
+  "name": "@weibaohui/ccc-darwin-arm64",
+  "version": "0.1.0",
+  "description": "ccc binary for macOS ARM64",
+  "keywords": ["ccc", "darwin", "macos", "binary"],
+  "license": "MIT",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weibaohui/ccc"
+  },
+  "bin": {
+    "ccc": "./bin/ccc"
+  },
+  "files": ["bin"]
+}
