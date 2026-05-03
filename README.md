@@ -1,6 +1,6 @@
 # ccc - Claude Config Switcher
 
-> 给 AI 用的配置切换工具 · Config switcher for AI agents
+> 给 AI 用的配置变更工具 · Config changer for AI agents
 
 [![CI](https://github.com/weibaohui/ccc/actions/workflows/ci.yml/badge.svg)](https://github.com/weibaohui/ccc/actions)
 [![npm version](https://img.shields.io/npm/v/@weibaohui/ccc.svg)](https://www.npmjs.com/package/@weibaohui/ccc)
@@ -26,15 +26,15 @@ AI: ccc apply deepseek → 自动切换 → 开始执行
 
 ### What is this?
 
-`ccc` (Claude Config Changer) is a CLI tool designed for **AI agents** to switch their own Claude Code configuration at runtime. Unlike GUI-based config switchers meant for humans, `ccc` is designed to be called programmatically — by another AI, a script, or any automation system.
+`ccc` (Claude Config Changer) is a CLI tool designed for **AI agents** to change their own Claude Code configuration at runtime. Unlike GUI-based config switchers meant for humans, `ccc` is designed to be called programmatically — by another AI, a script, or any automation system.
 
-When an AI agent needs to change its model, API endpoint, or credentials mid-session, it simply runs `ccc apply <profile>` and the switch happens automatically with a backup.
+When an AI agent needs to change its model, API endpoint, or credentials mid-session, it simply runs `ccc apply <profile>` and the change happens automatically with a backup.
 
 ### Key philosophy
 
 > **Humans decide, AI executes.**
 
-Humans tell AI which profile to use. The AI calls `ccc` to switch to it. No human involvement required for the actual switch.
+Humans tell AI which profile to use. The AI calls `ccc` to change to it. No human involvement required for the actual change.
 
 ### Install
 
@@ -101,7 +101,7 @@ Batch verify: 8 profile(s)
 ### How it works
 
 - Profiles are stored as `~/.claude/settings.json.<suffix>`
-- Before every switch, the current config is automatically backed up as `settings.json.bak-YYYYmmddHHMMSS`
+- Before every change, the current config is automatically backed up as `settings.json.bak-YYYYmmddHHMMSS`
 - Uses `fs::copy` — original file is never modified, only a backup is created
 
 ### File structure
@@ -109,7 +109,7 @@ Batch verify: 8 profile(s)
 ```
 ~/.claude/
 ├── settings.json              # Currently active config
-├── settings.json.deepseek      # AI can switch to any of these
+├── settings.json.deepseek      # AI can change to any of these
 ├── settings.json.claude
 ├── settings.json.zai
 └── settings.json.bak-*         # Auto-backups (not listed by 'ccc list')

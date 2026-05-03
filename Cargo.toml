@@ -2,7 +2,7 @@
 name = "ccc"
 version = "0.3.0"
 edition = "2021"
-description = "Claude settings switcher for AI agents"
+description = "Claude settings changer for AI agents"
 license = "MIT"
 repository = "https://github.com/weibaohui/ccc"
 

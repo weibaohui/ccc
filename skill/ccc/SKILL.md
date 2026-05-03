@@ -1,6 +1,6 @@
 ---
 name: ccc
-description: Claude settings switcher — manage multiple Claude profiles, verify credentials, and run commands with specific settings without modifying global config. AI agents use this to self-select configurations.
+description: Claude settings changer — manage multiple Claude profiles, verify credentials, and run commands with specific settings without modifying global config. AI agents use this to self-select configurations.
 version: 0.3.0
 author: weibaohui
 license: MIT
@@ -12,7 +12,7 @@ metadata:
 
 # CCC — Claude Settings Switcher
 
-`ccc` is a CLI tool for managing multiple Claude `settings.json` profiles. AI agents use it to verify and switch between different LLM provider configurations without modifying the global `~/.claude/settings.json`.
+`ccc` is a CLI tool for managing multiple Claude `settings.json` profiles. AI agents use it to verify and change between different LLM provider configurations without modifying the global `~/.claude/settings.json`.
 
 ## Quick Start
 
@@ -82,7 +82,7 @@ Displays configuration for a profile (or current settings if no suffix). The `AN
 ### `ccc apply <suffix>`
 Backs up the current `settings.json` with timestamp (`settings.json.bak-YYYYmmddHHMMSS`), then applies the specified profile as the new global settings.
 
-**Use case**: Human switching profiles permanently.
+**Use case**: Human changing profiles permanently.
 
 ### `ccc run <suffix> <command...>`
 Runs `claude --settings ~/.claude/settings.json.<suffix> [command]`. Does NOT modify the global `settings.json`.
