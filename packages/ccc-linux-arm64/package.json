@@ -1,0 +1,17 @@
+{
+  "name": "@weibaohui/ccc-linux-arm64",
+  "version": "0.3.0",
+  "description": "ccc binary for Linux ARM64 (AArch64)",
+  "keywords": ["ccc", "linux", "arm64", "aarch64", "binary"],
+  "license": "MIT",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/weibaohui/ccc"
+  },
+  "bin": {
+    "ccc": "./bin/ccc"
+  },
+  "files": ["bin"]
+}

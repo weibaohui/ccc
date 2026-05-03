@@ -24,6 +24,11 @@ jobs:
             use-cross: false
             artifact-name: ccc-linux-x64
 
+          - os: ubuntu-latest
+            target: aarch64-unknown-linux-gnu
+            use-cross: true
+            artifact-name: ccc-linux-arm64
+
           - os: macos-latest
             target: aarch64-apple-darwin
             use-cross: false
@@ -33,6 +38,11 @@ jobs:
             target: x86_64-apple-darwin
             use-cross: false
             artifact-name: ccc-darwin-x64
+
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use-cross: false
+            artifact-name: ccc-windows-x64
 
     runs-on: ${{ matrix.os }}
 
@@ -55,7 +65,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact-name }}
-          path: target/${{ matrix.target }}/release/ccc
+          path: target/${{ matrix.target }}/release/ccc${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
     needs: build
@@ -85,26 +95,31 @@ jobs:
 
           # Copy binaries to package bin/ directories
           mkdir -p packages/ccc-linux-x64/bin
+          mkdir -p packages/ccc-linux-arm64/bin
           mkdir -p packages/ccc-darwin-arm64/bin
           mkdir -p packages/ccc-darwin-x64/bin
+          mkdir -p packages/ccc-windows-x64/bin
 
           cp artifacts/ccc-linux-x64/ccc packages/ccc-linux-x64/bin/ccc
+          cp artifacts/ccc-linux-arm64/ccc packages/ccc-linux-arm64/bin/ccc
           cp artifacts/ccc-darwin-arm64/ccc packages/ccc-darwin-arm64/bin/ccc
           cp artifacts/ccc-darwin-x64/ccc packages/ccc-darwin-x64/bin/ccc
+          cp artifacts/ccc-windows-x64/ccc.exe packages/ccc-windows-x64/bin/ccc.exe
 
           chmod +x packages/ccc-linux-x64/bin/ccc
+          chmod +x packages/ccc-linux-arm64/bin/ccc
           chmod +x packages/ccc-darwin-arm64/bin/ccc
           chmod +x packages/ccc-darwin-x64/bin/ccc
 
           # Update version in all package.json files
-          for pkg in ccc-linux-x64 ccc-darwin-arm64 ccc-darwin-x64 ccc; do
-            node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('packages/$pkg/package.json','utf8')); p.version='$VERSION'; fs.writeFileSync('packages/$pkg/package.json', JSON.stringify(p, null, 2)+'\n');"
+          for pkg in ccc-linux-x64 ccc-linux-arm64 ccc-darwin-arm64 ccc-darwin-x64 ccc-windows-x64 ccc; do
+            node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('packages/$pkg/package.json','utf8')); p.version='$VERSION'; fs.writeFileSync('packages/$pkg/package.json', JSON.stringify(p, null, 2)+'\\n');"
             echo "Updated $pkg to $VERSION"
           done
 
       - name: Publish platform packages to npm
         run: |
-          for pkg in ccc-linux-x64 ccc-darwin-arm64 ccc-darwin-x64; do
+          for pkg in ccc-linux-x64 ccc-linux-arm64 ccc-darwin-arm64 ccc-darwin-x64 ccc-windows-x64; do
             echo "Publishing @weibaohui/$pkg..."
             cd packages/$pkg
             npm publish --access public
@@ -123,7 +138,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: artifacts/**/ccc
+          files: artifacts/**/ccc*
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
