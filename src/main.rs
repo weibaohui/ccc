@@ -66,14 +66,45 @@ enum Cli {
 
 #[derive(Parser, Debug)]
 enum SkillAction {
-    /// Install the embedded CCC skill to ~/.claude/skills/ccc/
-    Install,
+    /// Install the embedded CCC skill to ~/.claude/skills/ccc/ or specified target
+    Install {
+        /// Installation target: claudecode (default), hermes, or custom path
+        #[clap(long)]
+        to: Option<String>,
+    },
 }
 
 fn claude_dir() -> PathBuf {
     dirs::home_dir()
         .expect("Cannot find home directory")
         .join(CLAUDE_DIR)
+}
+
+fn hermes_dir() -> PathBuf {
+    dirs::home_dir()
+        .expect("Cannot find home directory")
+        .join(".hermes")
+}
+
+/// Resolve skill install target to a directory path
+fn resolve_skill_target(target: Option<&str>) -> Result<PathBuf, String> {
+    match target {
+        None | Some("claudecode") => Ok(claude_dir().join("skills").join(SKILL_NAME)),
+        Some("hermes") => Ok(hermes_dir().join("skills").join(SKILL_NAME)),
+        Some(s) if s.starts_with('/') || s.starts_with('~') => {
+            // Custom path - expand tilde if needed
+            if s.starts_with('~') {
+                let home = dirs::home_dir().ok_or("Cannot find home directory")?;
+                Ok(home.join(&s[1..]))
+            } else {
+                Ok(PathBuf::from(s))
+            }
+        }
+        Some(s) => Err(format!(
+            "Unknown target '{}'. Valid targets: claudecode (default), hermes, or absolute path",
+            s
+        )),
+    }
 }
 
 fn list_profile_files() -> Vec<String> {
@@ -665,8 +696,15 @@ fn main() {
             }
         }
         Cli::Skill { action } => match action {
-            SkillAction::Install => {
-                if let Err(e) = skill_install() {
+            SkillAction::Install { to } => {
+                let target_dir = match resolve_skill_target(to.as_deref()) {
+                    Ok(dir) => dir,
+                    Err(e) => {
+                        eprintln!("Skill install failed: {}", e);
+                        std::process::exit(1);
+                    }
+                };
+                if let Err(e) = skill_install(target_dir) {
                     eprintln!("Skill install failed: {}", e);
                     std::process::exit(1);
                 }
@@ -675,7 +713,7 @@ fn main() {
     }
 }
 
-fn skill_install() -> Result<(), String> {
+fn skill_install(skill_dir: PathBuf) -> Result<(), String> {
     let skill_bytes = SKILL_ZIP;
     if skill_bytes.is_empty() {
         return Err("No embedded skill found. The skill was not compiled into the binary.".to_string());
@@ -684,8 +722,6 @@ fn skill_install() -> Result<(), String> {
     let cursor = std::io::Cursor::new(skill_bytes);
     let mut archive = ZipArchive::new(cursor).map_err(|e| format!("Failed to read skill zip: {}", e))?;
 
-    // Target directory: ~/.claude/skills/ccc/
-    let skill_dir = claude_dir().join("skills").join(SKILL_NAME);
     fs::create_dir_all(&skill_dir).map_err(|e| format!("Failed to create skill directory: {}", e))?;
 
     for i in 0..archive.len() {

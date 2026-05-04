@@ -1,9 +1,39 @@
 ---
 name: ccc
-description: Claude settings changer — manage multiple Claude profiles, verify credentials, and run commands with specific settings without modifying global config. AI agents use this to self-select configurations.
+description: |
+  Claude 多配置切换工具 — 管理多个 Claude settings.json 配置文件。
+  AI agent 可用以下方式自然调用：
+  
+  * "我想用 minimax" → 加载 ccc skill，ccc run minimax
+  * "帮我切换到 zai 配置" → 加载 ccc skill，ccc view/apply zai
+  * "验证一下当前配置能用吗" → 加载 ccc skill，ccc verify
+  * "列出所有可用配置" → 加载 ccc skill，ccc list
+  
+  核心能力：不修改全局配置前提下临时切换模型配置；批量验证配置可用性。
 version: 0.3.0
 author: weibaohui
 license: MIT
+keywords:
+  # 切换相关
+  - 切换api
+  - 切换模型
+  - 切换账号
+  - 切换claude
+  - 切换provider
+  # 使用某个配置
+  - 用minimax
+  - 用claude
+  - 用zai
+  - 用kimi
+  # API/模型相关
+  - claude配置
+  - 换claude
+  - api切换
+  - 模型切换
+  # 快速操作
+  - 查看配置
+  - 验证配置
+  - 列出配置
 metadata:
   hermes:
     tags: [Claude, Settings, Profile, Config, Multi-Provider, AI-Agent]
@@ -110,12 +140,23 @@ Batch verifies all profiles (or specified ones) in parallel with real-time progr
 - Summary table with pass/fail status and model info
 
 ### `ccc skill install`
-Extracts the built-in `ccc` Claude skill to `~/.claude/skills/ccc/`. This makes the `ccc` skill available to Claude/AI agents.
+Extracts the built-in `ccc` Claude skill to the skill directory. This makes the `ccc` skill available to Claude/AI agents.
 
 ```bash
+# Install to default location (~/.claude/skills/ccc/)
 ccc skill install
-# Installs to ~/.claude/skills/ccc/SKILL.md
+
+# Install to hermes location (~/.hermes/skills/ccc/)
+ccc skill install --to hermes
+
+# Install to custom path
+ccc skill install --to /custom/path
 ```
+
+**Target Options:**
+- `claudecode` (default): Installs to `~/.claude/skills/ccc/`
+- `hermes`: Installs to `~/.hermes/skills/ccc/`
+- Absolute path: Installs to the specified path
 
 ## AI Agent Workflow (Recommended)
 
