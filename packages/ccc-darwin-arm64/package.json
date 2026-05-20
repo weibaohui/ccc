@@ -1,6 +1,6 @@
 {
   "name": "@weibaohui/ccc-darwin-arm64",
-  "version": "0.3.2",
+  "version": "0.5.0",
   "description": "ccc binary for macOS ARM64",
   "keywords": [
     "ccc",
